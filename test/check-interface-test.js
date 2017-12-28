@@ -55,10 +55,10 @@ test("Different check methods on TestHtmlPages", () => {
     eyes.check("Entire element by element", Target.region(driver.findElement(By.id("overflowing-div-image"))).fully());
 
     // Entire element by locator, equivalent to eyes.checkElementBy()
-    eyes.check("Entire element by locator", Target.region(By.id("overflowing-div")).fully().matchLevel(MatchLevel.Exact));
+    eyes.check("Entire element by locator", Target.region(By.id("overflowing-div")).fully());
 
     // Entire frame by locator, equivalent to eyes.checkFrame()
-    eyes.check("Entire frame by locator", Target.frame(By.name("frame1")).matchLevel(MatchLevel.None));
+    eyes.check("Entire frame by locator", Target.frame(By.name("frame1")));
 
     // Entire region in frame by frame name and region locator, equivalent to eyes.checkRegionInFrame()
     eyes.check("Entire region in frame by frame name and region locator", Target.region(By.id("inner-frame-div"), "frame1").fully());

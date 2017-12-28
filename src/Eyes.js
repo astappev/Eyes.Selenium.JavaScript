@@ -85,7 +85,7 @@
 
     //noinspection JSUnusedGlobalSymbols
     Eyes.prototype._getBaseAgentId = function () {
-        return 'selenium-js/0.0.69';
+        return 'selenium-js/0.0.75';
     };
 
     function _init(that, flow) {
@@ -123,14 +123,18 @@
             that._logger.verbose("Running using Protractor module");
 
             // extend protractor element to return ours
-            var originalElementFn = global.element;
-            global.element = function (locator) {
-                return new ElementFinderWrapper(originalElementFn(locator), that._driver, that._logger);
-            };
+            if (!global.isEyesOverrodeProtractor) {
+                var originalElementFn = global.element;
+                global.element = function (locator) {
+                    return new ElementFinderWrapper(originalElementFn(locator), that._driver, that._logger);
+                };
 
-            global.element.all = function (locator) {
-                return new ElementArrayFinderWrapper(originalElementFn.all(locator), that._driver, that._logger);
-            };
+                global.element.all = function (locator) {
+                    return new ElementArrayFinderWrapper(originalElementFn.all(locator), that._driver, that._logger);
+                };
+
+                global.isEyesOverrodeProtractor = true;
+            }
         } else {
             that._isProtractorLoaded = false;
             that._logger.verbose("Running using Selenium module");
@@ -277,7 +281,12 @@
         var regionObject,
             regionProvider,
             isFrameSwitched = false, // if we will switch frame then we need to restore parent
-            originalOverflow, originalPositionProvider, originalHideScrollBars;
+            originalForceFullPage, originalOverflow, originalPositionProvider, originalHideScrollBars;
+
+        if (target.getStitchContent()) {
+            originalForceFullPage = that._forceFullPage;
+            that._forceFullPage = true;
+        }
 
         // If frame specified
         if (target.isUsingFrame()) {
@@ -372,6 +381,10 @@
             }
 
             // restore initial values
+            if (originalForceFullPage !== undefined) {
+                that._forceFullPage = originalForceFullPage;
+            }
+
             if (originalHideScrollBars !== undefined) {
                 that._hideScrollbars = originalHideScrollBars;
             }
@@ -400,11 +413,9 @@
         return that._promiseFactory.makePromise(function (resolve) {
             if (isLocatorObject(elementObject)) {
                 that._logger.verbose("Trying to find element...", elementObject);
-                return that._driver.findElement(elementObject).then(function (element) {
-                    resolve(element);
-                });
+                return resolve(that._driver.findElement(elementObject));
             } else if (elementObject instanceof ElementFinderWrapper) {
-                resolve(elementObject.getWebElement());
+                return resolve(elementObject.getWebElement());
             }
 
             resolve(elementObject);
